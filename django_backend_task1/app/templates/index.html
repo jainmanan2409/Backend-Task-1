@@ -1,0 +1,126 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Django Dashboard</title>
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+</head>
+
+<body>
+    <div class="navbar">
+
+        <div class="navbar-container">
+
+            <div class="logo-container">
+                <p>Logo</p>
+            </div>
+
+            <div class="button-container">
+                <button>Dashboard</button>
+                <button>Products</button>
+                <button>Services</button>
+                <button>Contact Us</button>
+            </div>
+
+            <div class="notis-side">
+              <div class="notification-button">
+                <img src="{% static 'Vector.svg' %}">
+              </div>
+              
+              <div class="profile-container">
+                <img src="{% static '3135715.png' %}" class="profile-picture">
+              </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="header">
+        <p class="dashboard">Dashboard</p>
+        <button class="contact">Contact Us</button>
+    </div>
+
+    <div id="chart"></div>
+
+    <div id="users">
+      <section style="margin-top:18px;">
+        <h3 style="margin:0 0 10px 0">Users</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Broker</th>
+              <th>No.of Active positions</th>
+              <th>Available capital</th>
+              <th>Total Deployed Strategies</th>
+              <th>Active Strategies</th>
+              <th>Status</th>
+              <th>Current P&L</th>
+              <th>Required Capital</th>
+          </thead>
+          <tbody>
+            {% for u in users %}
+            <tr>
+              <td>{{ u.broker }}</td>
+              <td>{{ u.active_positions }}</td>
+              <td>{{ u.available_capital }}</td>
+              <td>{{ u.total_deployed }}</td>
+              <td>{{ u.active_strategies }}</td>
+              <td>{{ u.status }}</td>
+              <td>{{ u.current_pl }}</td>
+              <td>{{ u.required_capital }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+    </div>
+
+    
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // chart_data_json is already safe JSON from the backend
+  let chartData = {{ chart_data_json|safe }};
+
+  // ensure labels/series exist
+  let labels = chartData.labels || [];
+  let seriesData = chartData.series || [];
+
+  let options = {
+    chart: {
+      type: 'area',
+      height: 320,
+      toolbar: { show: false }
+    },
+    series: [{
+      name: 'Price Index',
+      data: seriesData
+    }],
+    xaxis: {
+      categories: labels
+    },
+    stroke: { curve: 'smooth' },
+    fill: { type: 'gradient' },
+    tooltip: {
+      y: {
+        formatter: function (val) {
+          return val !== null ? val.toFixed(3) : val;
+        }
+      }
+    }
+  };
+
+  let chartEl = document.querySelector("#chart");
+  if (chartEl) {
+    let chart = new ApexCharts(chartEl, options);
+    chart.render();
+  } else {
+    console.warn("Chart container not found (#chart).");
+  }
+});
+</script>
+
+</body>
+</html>
