@@ -6,7 +6,6 @@ from django.utils.safestring import mark_safe
 
 def app(request):
 
-    # ======== FETCH CHART DATA FROM API (BACKEND) =========
     url = "https://www.alphavantage.co/query?function=ALL_COMMODITIES&interval=monthly&apikey=demo"
     response = requests.get(url)
     
@@ -20,19 +19,16 @@ def app(request):
     series = [float(item["value"]) for item in data_list]
 # app/views.py
 import os
-import json
 import logging
 from datetime import datetime
 
 import requests
-from django.shortcuts import render
-from django.utils.safestring import mark_safe
+
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-# Put your API key in env var ALPHAVANTAGE_KEY or Django settings,
-# otherwise it will use 'demo' (AlphaVantage demo key which is rate-limited).
+
 ALPHA_KEY = os.environ.get("ALPHAVANTAGE_KEY", getattr(settings, "ALPHAVANTAGE_KEY", "demo"))
 ALPHA_URL = "https://www.alphavantage.co/query?function=ALL_COMMODITIES&interval=monthly&apikey={key}".format(key=ALPHA_KEY)
 
@@ -53,7 +49,6 @@ def fetch_chart_data_from_api(url=ALPHA_URL, timeout=8):
             value_raw = item.get("value", "")
             if not date_str:
                 continue
-            # normalize value and try convert to float
             if isinstance(value_raw, str):
                 v = value_raw.strip().replace(",", "")
             else:
@@ -75,7 +70,7 @@ def prepare_chart_payload(parsed_date_values):
     Sorts by date ascending and returns dict with labels and series lists.
     """
     def parse_date(s):
-        # try common ISO formats
+    
         for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m", "%Y/%m/%d"):
             try:
                 return datetime.strptime(s, fmt)
@@ -87,7 +82,6 @@ def prepare_chart_payload(parsed_date_values):
         except Exception:
             return None
 
-    # convert to (dt_obj, value, original_date_str)
     rows = []
     for date_str, val in parsed_date_values:
         dt = parse_date(date_str)
@@ -107,7 +101,6 @@ def app(request):
     if parsed:
         chart_data = prepare_chart_payload(parsed)
     else:
-        # Fallback sample data if API fails / no data
         labels = [
             "2024-12-01","2025-01-01","2025-02-01","2025-03-01",
             "2025-04-01","2025-05-01","2025-06-01"
@@ -115,7 +108,6 @@ def app(request):
         series = [166.63436509257, 172.779787344212, 172.042952296535, 167.42371963722, 162.488984129654, 160.525599378657, 165.786567246984]
         chart_data = {"labels": labels, "series": series}
 
-    # Users table data (you said you already have this; kept sample rows)
     users = [
         {"broker":"Zerodha (DU000004)","active_positions":1,"available_capital":"₹ 1.54 Cr","total_deployed":3,"active_strategies":1,"status":"Active","current_pl":"₹ 50.02 K","required_capital":"₹ 50.02 K"},
         {"broker":"Angel One (MNBn1026)","active_positions":2,"available_capital":"₹ 2.50 K","total_deployed":2,"active_strategies":2,"status":"Active","current_pl":"₹ 60.02 K","required_capital":"₹ 60.02 K"},
@@ -126,5 +118,4 @@ def app(request):
         "chart_data_json": mark_safe(json.dumps(chart_data)),
         "users": users,
     }
-    # IMPORTANT: pass context to template
     return render(request, 'index.html', context)
